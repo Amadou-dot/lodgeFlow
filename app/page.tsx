@@ -6,6 +6,7 @@ import { Image } from '@heroui/image';
 import { Phone, Mail } from 'lucide-react';
 
 import { siteConfig } from '@/config/site';
+import { siteToLodgingBusiness } from '@/lib/seo/jsonLd';
 import { connectDB, Cabin } from '@/models';
 import {
   HeroSection,
@@ -54,6 +55,9 @@ export default async function Home() {
 
   return (
     <div className='space-y-16 py-8'>
+      <script type='application/ld+json'>
+        {JSON.stringify(siteToLodgingBusiness())}
+      </script>
       {/* Hero Section */}
       <HeroSection
         subtitle='Escape to paradise. Experience luxury in the heart of untouched nature, where comfort meets wilderness in perfect harmony.'
