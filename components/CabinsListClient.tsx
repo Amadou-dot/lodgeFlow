@@ -162,7 +162,7 @@ export default function CabinsListClient({
       {sortedCabins.length > 0 ? (
         <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
           {sortedCabins.map(cabin => (
-            <CabinCard key={(cabin as any)._id.toString()} cabin={cabin} />
+            <CabinCard key={cabin._id.toString()} cabin={cabin} />
           ))}
         </div>
       ) : (
