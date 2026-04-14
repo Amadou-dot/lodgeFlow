@@ -1,20 +1,4 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/about(.*)',
-  '/cabins',
-  '/experiences(.*)',
-  '/dining(.*)',
-  '/pricing(.*)',
-  '/contact(.*)',
-  '/api/cabins(.*)',
-  '/api/experiences(.*)',
-  '/api/dining(.*)',
-  '/api/settings(.*)',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-]);
+import { clerkMiddleware } from '@clerk/nextjs/server';
 
 export default clerkMiddleware(async (auth, req) => {
   // Protect API routes that create bookings or user-specific data
