@@ -53,7 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [cabins, experiences, dining] = await Promise.all([
       Cabin.find({ status: 'active' }).select('_id updatedAt').lean(),
       Experience.find({}).select('_id updatedAt').lean(),
-      Dining.find({}).select('_id updatedAt').lean(),
+      Dining.find({ isAvailable: true }).select('_id updatedAt').lean(),
     ]);
 
     const cabinEntries: MetadataRoute.Sitemap = cabins.map((c: any) => ({
