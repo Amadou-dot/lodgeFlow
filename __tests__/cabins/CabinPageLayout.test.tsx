@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
+import type { Cabin } from '@/types';
 import CabinDetailClient from '@/components/CabinDetailClient';
 import { useUser } from '@clerk/nextjs';
 
@@ -116,7 +117,7 @@ describe('Enhanced Cabin Page - Issue #17', () => {
     amenities: ['WiFi', 'Kitchen'],
     checkInTime: '15:00',
     checkOutTime: '11:00',
-  } as any;
+  } as unknown as Cabin;
 
   const mockUser = {
     firstName: 'John',

@@ -23,8 +23,8 @@ export async function generateMetadata({
     };
   }
   const url = `/cabins/${id}`;
-  const effectivePrice = cabin.price - (cabin.discount ?? 0);
-  const title = `${cabin.name} — ${effectivePrice}/night`;
+  const effectivePrice = Math.max(0, cabin.price - (cabin.discount ?? 0));
+  const title = `${cabin.name} — $${effectivePrice}/night`;
   const description = cabin.description.slice(0, 160);
   return {
     title,
@@ -61,7 +61,12 @@ export default async function CabinDetailPage({ params }: { params: Params }) {
   ];
   return (
     <>
-      <script type='application/ld+json'>{JSON.stringify(jsonLd)}</script>
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
       <CabinDetailClient cabin={cabin} />
     </>
   );
