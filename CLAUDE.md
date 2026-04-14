@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-pnpm dev              # Start dev server (port 3002, uses Turbopack)
+pnpm dev              # Start dev server (Turbopack). Customer portal convention is port 3002 to avoid the admin dashboard on 3000 — set PORT in .env.local.
 pnpm build            # Production build
 pnpm lint             # ESLint with auto-fix
 pnpm test             # Run all tests
@@ -25,6 +25,7 @@ pnpm ci:check         # Full CI check (format + lint + test)
 - **HeroUI v2** component library with Tailwind CSS
 - **React Query** for server state management
 - **Resend** for transactional emails
+- **Stripe** for payments (`lib/stripe.ts`, webhook handler at `app/api/payments/`)
 
 ### Data Flow Pattern
 
@@ -37,10 +38,21 @@ Custom hooks in `hooks/` use React Query to fetch from internal API routes. API 
 ### Key Directories
 
 - `app/api/` - API routes: bookings, cabins, dining, dining-reservations, experiences, experience-bookings, payments, settings, send (email)
-- `models/` - Mongoose schemas: Booking, Cabin, Dining, DiningReservation, Experience, ExperienceBooking, Settings
+- `models/` - Mongoose schemas: Booking, Cabin, Dining, DiningReservation, Experience, ExperienceBooking, ProcessedStripeEvent, Settings
 - `hooks/` - React Query hooks matching API resources (useCabin, useBooking, etc.)
 - `types/index.ts` - Centralized TypeScript types, re-exports model interfaces
 - `components/ui/` - Reusable UI components
+- `lib/validations/` - Zod schemas validated at API boundaries (booking, dining-reservation, experience-booking)
+
+### Auth Routing (`proxy.ts`)
+
+Next.js 16 replaces `middleware.ts` with `proxy.ts`. Clerk middleware lives there and gates:
+
+- Dynamic cabin detail pages (`/cabins/[id]`) require login
+- All `/api/bookings` routes require auth
+- Public API routes (`/api/cabins`, `/api/experiences`, `/api/dining`, `/api/settings`) are explicitly allowed
+
+When adding new protected routes, update `proxy.ts` — not a file named `middleware.ts`.
 
 ### Model Relationships
 
@@ -49,6 +61,7 @@ Custom hooks in `hooks/` use React Query to fetch from internal API routes. API 
 - **DiningReservation.dining** references Dining via ObjectId
 - **\*.customer** stores Clerk user ID as string (not ObjectId)
 - All models extend Mongoose `Document` interface
+- **ProcessedStripeEvent** stores Stripe webhook event IDs for idempotency — check this before processing a webhook to avoid double-handling
 
 ### API Response Format
 
@@ -60,7 +73,7 @@ All API routes return `ApiResponse<T>`:
 
 ### Testing
 
-Tests live in `__tests__/` organized by feature (bookings, cabins, shared). Jest with React Testing Library. Framer-motion is mocked in `__tests__/__mocks__/`.
+Tests live in `__tests__/` organized by feature (bookings, cabins, lib, shared). Jest with React Testing Library. Framer-motion is mocked in `__tests__/__mocks__/`.
 
 - HeroUI components also need manual mocks in `__tests__/__mocks__/@heroui/` — add one per package (e.g. `skeleton.js`, `tooltip.js`)
 - Components that use React Query (`useX` hooks) must be mocked in page-level tests to avoid needing `QueryClientProvider`
