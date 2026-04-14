@@ -1,7 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { useRouter } from 'next/navigation';
-import CabinPage from '@/app/cabins/[id]/page';
-import { useCabin } from '@/hooks/useCabin';
+import CabinDetailClient from '@/components/CabinDetailClient';
 import { useUser } from '@clerk/nextjs';
 
 // Mock all dependencies
@@ -9,7 +8,6 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('@/hooks/useCabin');
 jest.mock('@clerk/nextjs', () => ({
   useUser: jest.fn(),
 }));
@@ -109,15 +107,16 @@ describe('Enhanced Cabin Page - Issue #17', () => {
   const mockCabin = {
     _id: 'cabin-123',
     name: 'Mountain View Cabin',
-    description: 'A beautiful cabin',
+    description: 'A beautiful cabin with all amenities',
     capacity: 4,
     price: 300,
     discount: 50,
     image: '/cabin.jpg',
+    images: ['/cabin.jpg', '/cabin2.jpg'],
     amenities: ['WiFi', 'Kitchen'],
     checkInTime: '15:00',
     checkOutTime: '11:00',
-  };
+  } as any;
 
   const mockUser = {
     firstName: 'John',
@@ -126,7 +125,6 @@ describe('Enhanced Cabin Page - Issue #17', () => {
     phoneNumbers: [{ phoneNumber: '+1234567890' }],
   };
 
-  const mockParams = Promise.resolve({ id: 'cabin-123' });
   const mockPush = jest.fn();
 
   beforeEach(() => {
@@ -134,39 +132,31 @@ describe('Enhanced Cabin Page - Issue #17', () => {
     (useRouter as jest.Mock).mockReturnValue({
       push: mockPush,
     });
-    (useCabin as jest.Mock).mockReturnValue({
-      data: mockCabin,
-      isLoading: false,
-      error: null,
-    });
     (useUser as jest.Mock).mockReturnValue({
       user: mockUser,
       isLoaded: true,
     });
   });
 
-  it('renders breadcrumb navigation with correct items', async () => {
-    render(<CabinPage params={mockParams} />);
-
-    // Wait for async params to resolve
-    await screen.findByTestId('breadcrumb');
+  it('renders breadcrumb navigation with correct items', () => {
+    render(<CabinDetailClient cabin={mockCabin} />);
 
     expect(screen.getByText('Home')).toBeInTheDocument();
     expect(screen.getByText('Cabins')).toBeInTheDocument();
     expect(screen.getByText('Mountain View Cabin')).toBeInTheDocument();
   });
 
-  it('renders Back to Cabins button', async () => {
-    render(<CabinPage params={mockParams} />);
+  it('renders Back to Cabins button', () => {
+    render(<CabinDetailClient cabin={mockCabin} />);
 
-    const backButton = await screen.findByText('Back to Cabins');
+    const backButton = screen.getByText('Back to Cabins');
     expect(backButton).toBeInTheDocument();
   });
 
-  it('navigates to cabins page when Back button is clicked', async () => {
-    render(<CabinPage params={mockParams} />);
+  it('navigates to cabins page when Back button is clicked', () => {
+    render(<CabinDetailClient cabin={mockCabin} />);
 
-    const backButton = await screen.findByText('Back to Cabins');
+    const backButton = screen.getByText('Back to Cabins');
 
     // Verify button exists and test the onPress handler directly
     expect(backButton).toBeInTheDocument();
@@ -177,64 +167,22 @@ describe('Enhanced Cabin Page - Issue #17', () => {
     expect(buttonElement).toBeInTheDocument();
   });
 
-  it('renders cabin details section', async () => {
-    render(<CabinPage params={mockParams} />);
+  it('renders cabin details section', () => {
+    render(<CabinDetailClient cabin={mockCabin} />);
 
-    const cabinDetails = await screen.findByTestId('cabin-details');
+    const cabinDetails = screen.getByTestId('cabin-details');
     expect(cabinDetails).toBeInTheDocument();
   });
 
-  it('renders booking form section', async () => {
-    render(<CabinPage params={mockParams} />);
+  it('renders booking form section', () => {
+    render(<CabinDetailClient cabin={mockCabin} />);
 
-    const bookingForm = await screen.findByTestId('booking-form');
+    const bookingForm = screen.getByTestId('booking-form');
     expect(bookingForm).toBeInTheDocument();
   });
 
-  it('shows loading state while fetching cabin data', () => {
-    (useCabin as jest.Mock).mockReturnValue({
-      data: null,
-      isLoading: true,
-      error: null,
-    });
-
-    const { container } = render(<CabinPage params={mockParams} />);
-    expect(
-      container.querySelector('[data-testid="page-loading-skeleton"]')
-    ).toBeInTheDocument();
-  });
-
-  it('shows error state when cabin fetch fails', async () => {
-    (useCabin as jest.Mock).mockReturnValue({
-      data: null,
-      isLoading: false,
-      error: new Error('Failed to fetch cabin'),
-    });
-
-    render(<CabinPage params={mockParams} />);
-
-    const errorMessage = await screen.findByText(/Error:/);
-    expect(errorMessage).toBeInTheDocument();
-    expect(screen.getByText(/Failed to fetch cabin/)).toBeInTheDocument();
-  });
-
-  it('shows not found state when cabin is null', async () => {
-    (useCabin as jest.Mock).mockReturnValue({
-      data: null,
-      isLoading: false,
-      error: null,
-    });
-
-    render(<CabinPage params={mockParams} />);
-
-    const notFoundMessage = await screen.findByText('Cabin not found');
-    expect(notFoundMessage).toBeInTheDocument();
-  });
-
-  it('applies correct responsive layout classes', async () => {
-    const { container } = render(<CabinPage params={mockParams} />);
-
-    await screen.findByTestId('breadcrumb');
+  it('applies correct responsive layout classes', () => {
+    const { container } = render(<CabinDetailClient cabin={mockCabin} />);
 
     // Check for space-y layout
     const mainLayout = container.querySelector('.space-y-8');
@@ -253,17 +201,14 @@ describe('Enhanced Cabin Page - Issue #17', () => {
       isLoaded: false,
     });
 
-    const { container } = render(<CabinPage params={mockParams} />);
-    expect(
-      container.querySelector('[data-testid="page-loading-skeleton"]')
-    ).toBeInTheDocument();
+    render(<CabinDetailClient cabin={mockCabin} />);
+    // Component still renders even if user is not loaded; it just won't show user data
+    expect(screen.getByText('Mountain View Cabin')).toBeInTheDocument();
   });
 
-  it('renders new social proof sections', async () => {
-    render(<CabinPage params={mockParams} />);
-    expect(
-      await screen.findByTestId('cabin-trust-indicators')
-    ).toBeInTheDocument();
+  it('renders new social proof sections', () => {
+    render(<CabinDetailClient cabin={mockCabin} />);
+    expect(screen.getByTestId('cabin-trust-indicators')).toBeInTheDocument();
     expect(screen.getByTestId('cabin-testimonials')).toBeInTheDocument();
     expect(
       screen.getByTestId('cabin-availability-preview')
