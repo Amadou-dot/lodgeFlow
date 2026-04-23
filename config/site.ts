@@ -4,53 +4,24 @@ export const siteConfig = {
   name: 'LodgeFlow',
   description:
     'Welcome to paradise. Escape to luxury in the heart of nature at LodgeFlow.',
+  // SEO / social fields
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://lodgeflow.com',
+  twitterHandle: '@lodgeflow',
+  defaultOgImageAlt: 'LodgeFlow — luxury cabins in nature',
   navItems: [
-    {
-      label: 'Home',
-      href: '/',
-    },
-    {
-      label: 'Cabins',
-      href: '/cabins',
-    },
-    {
-      label: 'Experiences',
-      href: '/experiences',
-    },
-    {
-      label: 'Dining',
-      href: '/dining',
-    },
-    {
-      label: 'About',
-      href: '/about',
-    },
-    {
-      label: 'Contact',
-      href: '/contact',
-    },
+    { label: 'Home', href: '/' },
+    { label: 'Cabins', href: '/cabins' },
+    { label: 'Experiences', href: '/experiences' },
+    { label: 'Dining', href: '/dining' },
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
   ],
   navMenuItems: [
-    {
-      label: 'My Bookings',
-      href: '/bookings',
-    },
-    {
-      label: 'Profile',
-      href: '/profile',
-    },
-    {
-      label: 'Preferences',
-      href: '/preferences',
-    },
-    {
-      label: 'Help & Support',
-      href: '/help',
-    },
-    {
-      label: 'Logout',
-      href: '/logout',
-    },
+    { label: 'My Bookings', href: '/bookings' },
+    { label: 'Profile', href: '/profile' },
+    { label: 'Preferences', href: '/preferences' },
+    { label: 'Help & Support', href: '/help' },
+    { label: 'Logout', href: '/logout' },
   ],
   links: {
     reservations: 'tel:+1-800-LODGEFLOW',

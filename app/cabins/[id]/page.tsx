@@ -1,210 +1,73 @@
-'use client';
-import BookingForm from '@/components/BookingForm';
-import Breadcrumb from '@/components/Breadcrumb';
-import CabinAvailabilityPreview from '@/components/CabinAvailabilityPreview';
-import CabinBookingSteps from '@/components/CabinBookingSteps';
-import CabinDetails from '@/components/CabinDetails';
-import CabinGallery from '@/components/CabinGallery';
-import CabinMobileTabs from '@/components/CabinMobileTabs';
-import CabinTestimonials from '@/components/CabinTestimonials';
-import CabinTrustIndicators from '@/components/CabinTrustIndicators';
-import CabinPricingCalculator from '@/components/CabinPricingCalculator';
-import CabinShareButton from '@/components/CabinShareButton';
-import CabinSimilar from '@/components/CabinSimilar';
-import { useCabin } from '@/hooks/useCabin';
-import { useSettings } from '@/hooks/useSettings';
-import { useUser } from '@clerk/nextjs';
-import { Button } from '@heroui/button';
-import { Skeleton } from '@heroui/skeleton';
-import { Tooltip } from '@heroui/tooltip';
-import { ArrowLeft, Heart } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 
-type Params = Promise<{
-  id: string;
-}>;
+import CabinDetailClient from '@/components/CabinDetailClient';
+import { siteConfig } from '@/config/site';
+import { getCabinById } from '@/lib/data/cabins';
+import { buildBreadcrumbList, cabinToLodgingBusiness } from '@/lib/seo/jsonLd';
 
-export default function Page({ params }: { params: Params }) {
-  const [cabinId, setCabinId] = useState<string>('');
-  const { data: cabin, isLoading, error } = useCabin(cabinId);
-  const { data: settings, isError: settingsError } = useSettings();
-  const { user, isLoaded: userLoaded } = useUser();
-  const router = useRouter();
+type Params = Promise<{ id: string }>;
 
-  useEffect(() => {
-    const getCabinId = async () => {
-      const { id } = await params;
-      setCabinId(id);
-    };
-
-    getCabinId();
-  }, [params]);
-
-  if (isLoading || !cabinId || !userLoaded) {
-    return (
-      <div
-        className='container mx-auto px-4 py-8 max-w-7xl'
-        data-testid='page-loading-skeleton'
-      >
-        <Skeleton className='mb-6 h-6 w-48 rounded-lg' />
-        <Skeleton className='mb-8 h-10 w-32 rounded-lg' />
-        <Skeleton
-          className='w-full rounded-2xl'
-          style={{ aspectRatio: '16 / 9', maxHeight: '520px' }}
-        />
-        <div className='mt-8 space-y-4'>
-          <Skeleton className='h-8 w-64 rounded-lg' />
-          <Skeleton className='h-4 w-full rounded-lg' />
-          <Skeleton className='h-4 w-3/4 rounded-lg' />
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='text-lg text-red-500'>
-          Error: {error instanceof Error ? error.message : 'An error occurred'}
-        </div>
-      </div>
-    );
-  }
-
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const cabin = await getCabinById(id);
   if (!cabin) {
-    return (
-      <div className='flex justify-center items-center min-h-screen'>
-        <div className='text-lg'>Cabin not found</div>
-      </div>
-    );
+    return {
+      title: 'Cabin not found',
+      description: 'This cabin is unavailable or has been removed.',
+      robots: { index: false, follow: false },
+    };
   }
+  const url = `/cabins/${id}`;
+  const effectivePrice = Math.max(0, cabin.price - (cabin.discount ?? 0));
+  const title = `${cabin.name} — $${effectivePrice}/night`;
+  const description = cabin.description.slice(0, 160);
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      type: 'website',
+      url,
+      title,
+      description,
+      siteName: siteConfig.name,
+      images: cabin.image ? [{ url: cabin.image, alt: cabin.name }] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: cabin.image ? [cabin.image] : undefined,
+    },
+  };
+}
 
-  const userData = user
-    ? {
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.emailAddresses[0]?.emailAddress || '',
-        phone: user.phoneNumbers[0]?.phoneNumber || '',
-      }
-    : undefined;
-
-  const breadcrumbItems = [
-    { label: 'Home', href: '/' },
-    { label: 'Cabins', href: '/cabins' },
-    { label: cabin.name },
+export default async function CabinDetailPage({ params }: { params: Params }) {
+  const { id } = await params;
+  const cabin = await getCabinById(id);
+  if (!cabin) notFound();
+  const jsonLd = [
+    cabinToLodgingBusiness(cabin),
+    buildBreadcrumbList([
+      { name: 'Home', url: '/' },
+      { name: 'Cabins', url: '/cabins' },
+      { name: cabin.name },
+    ]),
   ];
-
   return (
-    <div className='container mx-auto px-4 py-8 max-w-7xl'>
-      {/* Breadcrumb Navigation */}
-      <div className='mb-6'>
-        <Breadcrumb items={breadcrumbItems} />
-      </div>
-
-      {/* Back Button */}
-      <div className='mb-8'>
-        <Button
-          className='gap-2'
-          startContent={<ArrowLeft size={18} />}
-          variant='light'
-          onPress={() => router.push('/cabins')}
-        >
-          Back to Cabins
-        </Button>
-      </div>
-
-      {/* Main Content */}
-      <div className='space-y-8'>
-        {/* Gallery - always visible */}
-        <CabinGallery
-          images={[cabin.image, ...(cabin.images || [])].filter(Boolean)}
-        />
-
-        {/* Share and Wishlist row - always visible */}
-        <div className='flex gap-2'>
-          <CabinShareButton cabinName={cabin.name} />
-          <Tooltip content='Coming soon'>
-            <Button
-              aria-label='Add to wishlist (coming soon)'
-              isDisabled
-              variant='light'
-            >
-              <Heart size={18} />
-            </Button>
-          </Tooltip>
-        </div>
-
-        {/* Mobile Layout: tabbed interface (< lg) */}
-        <div className='lg:hidden' id='booking'>
-          <CabinMobileTabs
-            cabin={cabin}
-            userData={userData}
-            bookingCabin={{
-              _id: cabin._id.toString(),
-              discount: cabin.discount,
-              image: cabin.image,
-              maxCapacity: cabin.capacity,
-              name: cabin.name,
-              regularPrice: cabin.price,
-            }}
-          />
-        </div>
-
-        {/* Desktop Layout: vertical stack (lg+) */}
-        <div className='hidden lg:block space-y-8'>
-          {/* Trust Indicators */}
-          {settings?.cancellationPolicy ? (
-            <CabinTrustIndicators
-              cancellationPolicy={
-                settings.cancellationPolicy as
-                  | 'flexible'
-                  | 'moderate'
-                  | 'strict'
-              }
-            />
-          ) : settingsError ? (
-            <p className='text-sm text-foreground-400'>
-              Trust information temporarily unavailable.
-            </p>
-          ) : null}
-
-          <CabinDetails cabin={cabin} />
-
-          <CabinTestimonials />
-
-          <CabinAvailabilityPreview cabinId={cabinId} />
-
-          <CabinBookingSteps />
-
-          <div className='lg:max-w-3xl lg:mx-auto' id='booking'>
-            <BookingForm
-              userData={userData}
-              cabin={{
-                _id: cabin._id.toString(),
-                discount: cabin.discount,
-                image: cabin.image,
-                maxCapacity: cabin.capacity,
-                name: cabin.name,
-                regularPrice: cabin.price,
-              }}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Price Calculator - mobile only (desktop has inline pricing in BookingForm) */}
-      <div className='mt-8 lg:hidden'>
-        <CabinPricingCalculator discount={cabin.discount} price={cabin.price} />
-      </div>
-
-      {/* Similar Cabins - visible on all screen sizes */}
-      <div className='mt-8'>
-        <CabinSimilar
-          capacity={cabin.capacity}
-          currentCabinId={cabin._id.toString()}
-        />
-      </div>
-    </div>
+    <>
+      <script
+        type='application/ld+json'
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c'),
+        }}
+      />
+      <CabinDetailClient cabin={cabin} />
+    </>
   );
 }
