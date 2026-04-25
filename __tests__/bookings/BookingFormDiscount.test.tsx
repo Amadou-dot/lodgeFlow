@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import BookingForm from '@/components/BookingForm';
 import { useCreateBooking } from '@/hooks/useBooking';
 import { useUser } from '@clerk/nextjs';
@@ -6,6 +6,13 @@ import { useRouter } from 'next/navigation';
 
 // Mock dependencies
 jest.mock('@/hooks/useBooking');
+jest.mock('@/hooks/useSettings', () => ({
+  useSettings: jest.fn(() => ({
+    data: undefined,
+    isLoading: false,
+    error: null,
+  })),
+}));
 jest.mock('@clerk/nextjs');
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),

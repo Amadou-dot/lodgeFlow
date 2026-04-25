@@ -57,7 +57,6 @@ export interface UpdateCabinData extends Partial<CreateCabinData> {
 
 export interface CreateBookingData {
   cabinId: string;
-  customerId: string;
   checkInDate: Date;
   checkOutDate: Date;
   numGuests: number;

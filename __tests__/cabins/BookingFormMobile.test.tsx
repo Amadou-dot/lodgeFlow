@@ -7,6 +7,13 @@ import { useRouter } from 'next/navigation';
 
 jest.mock('@/hooks/useBooking');
 jest.mock('@/hooks/useIsMobile');
+jest.mock('@/hooks/useSettings', () => ({
+  useSettings: jest.fn(() => ({
+    data: undefined,
+    isLoading: false,
+    error: null,
+  })),
+}));
 jest.mock('@clerk/nextjs');
 jest.mock('next/navigation', () => ({ useRouter: jest.fn() }));
 jest.mock('swr', () => ({

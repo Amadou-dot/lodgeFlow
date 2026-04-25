@@ -1,8 +1,19 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+
+const isProtectedApiRoute = createRouteMatcher([
+  '/api/bookings(.*)',
+  '/api/dining-reservations(.*)',
+  '/api/experience-bookings(.*)',
+  '/api/payments(.*)',
+  '/api/send(.*)',
+]);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Protect API routes that create bookings or user-specific data
-  if (req.nextUrl.pathname.startsWith('/api/bookings')) {
+  // Stripe webhook is verified by signature, not Clerk session.
+  if (req.nextUrl.pathname === '/api/payments/webhook') {
+    return;
+  }
+  if (isProtectedApiRoute(req)) {
     await auth.protect();
   }
 });

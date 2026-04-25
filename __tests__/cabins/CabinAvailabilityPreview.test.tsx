@@ -58,13 +58,14 @@ describe('CabinAvailabilityPreview', () => {
   });
 
   it('marks unavailable dates with danger styling', () => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    // Pick a future date in the current month (day 20)
-    const futureDay = 20;
-    const startDate = `${year}-${String(month + 1).padStart(2, '0')}-${futureDay}`;
-    const endDate = `${year}-${String(month + 1).padStart(2, '0')}-${futureDay + 2}`;
+    // Pick dates a few days into the future to avoid the component skipping past days.
+    const toIso = (d: Date) => d.toISOString().slice(0, 10);
+    const startDateObj = new Date();
+    startDateObj.setDate(startDateObj.getDate() + 3);
+    const endDateObj = new Date();
+    endDateObj.setDate(endDateObj.getDate() + 5);
+    const startDate = toIso(startDateObj);
+    const endDate = toIso(endDateObj);
 
     (useCabinAvailability as jest.Mock).mockReturnValue({
       isLoading: false,

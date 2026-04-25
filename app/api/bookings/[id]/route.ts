@@ -13,16 +13,34 @@ import {
 } from '@/lib/validations/utils';
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: 'Unauthorized',
+      };
+      return NextResponse.json(response, { status: 401 });
+    }
+
     await connectDB();
     const { id } = await params;
 
     const booking = await Booking.findById(id).populate('cabin');
 
     if (!booking) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: 'Booking not found',
+      };
+      return NextResponse.json(response, { status: 404 });
+    }
+
+    if (booking.customer.toString() !== userId) {
       const response: ApiResponse<never> = {
         success: false,
         error: 'Booking not found',

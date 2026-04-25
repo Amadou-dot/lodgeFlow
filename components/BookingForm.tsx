@@ -144,7 +144,6 @@ export default function BookingForm({ cabin, userData }: BookingFormProps) {
 
     const bookingData: CreateBookingData = {
       cabinId: cabin._id,
-      customerId: user.id,
       checkInDate: new Date(dateRange.start.toString()),
       checkOutDate: new Date(dateRange.end.toString()),
       numGuests: parseInt(numberOfGuests, 10),

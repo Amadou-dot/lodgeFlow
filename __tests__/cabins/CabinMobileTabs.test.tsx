@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CabinMobileTabs from '@/components/CabinMobileTabs';
+import type { Cabin } from '@/types';
 
 jest.mock('@/components/CabinDetails', () => ({
   CabinDescriptionSection: () => (
@@ -30,7 +31,7 @@ const mockCabin = {
   discount: 0,
   description: 'A test cabin.',
   amenities: ['WiFi'],
-};
+} as unknown as Cabin;
 
 const mockBookingCabin = {
   _id: 'cabin-123',

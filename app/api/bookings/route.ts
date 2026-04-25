@@ -1,6 +1,6 @@
 import { Booking, Cabin, connectDB, Settings } from '@/models';
 import type { ApiResponse, PopulatedBooking } from '@/types';
-import { clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createBookingSchema } from '@/lib/validations';
 import {
@@ -9,6 +9,15 @@ import {
 } from '@/lib/validations/utils';
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: 'Unauthorized',
+      };
+      return NextResponse.json(response, { status: 401 });
+    }
+
     await connectDB();
 
     const body = await request.json();
@@ -21,7 +30,6 @@ export async function POST(request: NextRequest) {
 
     const {
       cabinId,
-      customerId,
       checkInDate,
       checkOutDate,
       numGuests,
@@ -29,17 +37,6 @@ export async function POST(request: NextRequest) {
       specialRequests,
       observations,
     } = validation.data;
-
-    const client = await clerkClient();
-    const user = await client.users.getUser(customerId);
-
-    if (!user) {
-      const response: ApiResponse<never> = {
-        success: false,
-        error: 'Customer not found',
-      };
-      return NextResponse.json(response, { status: 404 });
-    }
 
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
@@ -156,12 +153,10 @@ export async function POST(request: NextRequest) {
       ? Math.round(totalPrice * (settings.depositPercentage / 100))
       : 0;
 
-    // Ensure customer exists
-
     // Create booking
     const booking = await Booking.create({
       cabin: cabinId,
-      customer: customerId,
+      customer: userId,
       checkInDate: checkIn,
       checkOutDate: checkOut,
       numNights,

@@ -46,7 +46,6 @@ export const refundStatusSchema = z.enum(REFUND_STATUSES);
 export const createBookingSchema = z
   .object({
     cabinId: z.string().min(1, 'Cabin ID is required'),
-    customerId: z.string().min(1, 'Customer ID is required'),
     checkInDate: z.coerce.date(),
     checkOutDate: z.coerce.date(),
     numGuests: z.number().int().min(1, 'At least 1 guest required').max(50),
