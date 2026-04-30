@@ -5,6 +5,7 @@ import {
   CabinInfoSection,
   CabinHouseRulesSection,
 } from '@/components/CabinDetails';
+import type { Cabin } from '@/types';
 
 jest.mock('@/hooks/useSettings', () => ({
   useSettings: () => ({ data: null, isLoading: false }),
@@ -19,7 +20,7 @@ const mockCabin = {
   discount: 0,
   description: 'A beautiful mountain cabin.',
   amenities: ['WiFi', 'Kitchen'],
-};
+} as unknown as Cabin;
 
 describe('CabinDescriptionSection', () => {
   it('renders description heading and text', () => {
@@ -38,7 +39,9 @@ describe('CabinAmenitiesSection', () => {
 
   it('renders nothing when amenities array is empty', () => {
     const { container } = render(
-      <CabinAmenitiesSection cabin={{ ...mockCabin, amenities: [] }} />
+      <CabinAmenitiesSection
+        cabin={{ ...mockCabin, amenities: [] } as unknown as Cabin}
+      />
     );
     expect(container.firstChild).toBeNull();
   });

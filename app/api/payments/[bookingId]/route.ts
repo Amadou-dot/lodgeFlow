@@ -43,12 +43,12 @@ export async function GET(
       return NextResponse.json(response, { status: 404 });
     }
 
-    if (booking.customer !== userId) {
+    if (booking.customer.toString() !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Not authorized to view this payment status',
+        error: 'Booking not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     const paymentStatus: PaymentStatusData = {
