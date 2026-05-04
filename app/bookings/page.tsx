@@ -421,8 +421,8 @@ export default function BookingsPage() {
                               <div className='pt-2'>
                                 <PaymentButton
                                   amount={amountToPay}
-                                  bookingId={booking._id.toString()}
                                   isDeposit={isDepositDue}
+                                  resourceId={booking._id.toString()}
                                   size='sm'
                                 />
                               </div>
