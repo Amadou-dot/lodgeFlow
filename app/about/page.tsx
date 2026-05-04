@@ -75,6 +75,14 @@ export default function AboutPage() {
       tagline: "We don't just build cabins—we build trust with the land.",
     },
     {
+      name: 'James Smith',
+      role: 'Operations Manager',
+      bio: 'James is the quiet force that keeps LodgeFlow running smoothly. With a background in sustainable engineering and logistics, he oversees everything from water systems to trail maintenance. His meticulous planning and problem-solving ensure that every guest experience is seamless—and every footprint is light.',
+      image: '/james_smith.png',
+      tagline:
+        'Behind every peaceful moment is a thousand moving parts. I make sure they move gently.',
+    },
+    {
       name: 'Emily Wren',
       role: 'Guest Experience Manager',
       bio: "Emily is the warm smile behind every unforgettable stay. With a background in hospitality and a passion for storytelling, she curates experiences that connect guests to the soul of the wilderness. Whether it's a sunrise hike, a stargazing evening, or a handwritten welcome note, Emily ensures every detail feels personal and poetic.",
@@ -94,14 +102,6 @@ export default function AboutPage() {
       bio: "Sophia blends strategy with soul, crafting LodgeFlow's brand as a beacon for eco-conscious travelers. With a background in ethical branding and digital storytelling, she's the voice behind every campaign, blog post, and social moment. Her work invites guests not just to visit—but to belong.",
       image: '/sophia_patel.png',
       tagline: "We don't sell escapes. We share a way of being.",
-    },
-    {
-      name: 'James Smith',
-      role: 'Operations Manager',
-      bio: 'James is the quiet force that keeps LodgeFlow running smoothly. With a background in sustainable engineering and logistics, he oversees everything from water systems to trail maintenance. His meticulous planning and problem-solving ensure that every guest experience is seamless—and every footprint is light.',
-      image: '/james_smith.png',
-      tagline:
-        'Behind every peaceful moment is a thousand moving parts. I make sure they move gently.',
     },
   ];
 
