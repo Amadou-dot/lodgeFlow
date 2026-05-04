@@ -1,8 +1,17 @@
 import { Resend } from 'resend';
 import { clerkClient } from '@clerk/nextjs/server';
 
-import { PaymentConfirmationEmail } from '@/components/EmailTemplates';
-import type { PopulatedBooking, Cabin } from '@/types';
+import {
+  PaymentConfirmationEmail,
+  DiningReservationConfirmationEmail,
+  ExperienceBookingConfirmationEmail,
+} from '@/components/EmailTemplates';
+import type {
+  PopulatedBooking,
+  Cabin,
+  PopulatedDiningReservation,
+  PopulatedExperienceBooking,
+} from '@/types';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -167,6 +176,114 @@ export async function sendCancellationConfirmationEmail(
     };
   } catch (error) {
     console.error('Failed to send cancellation confirmation email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email',
+    };
+  }
+}
+
+export interface SendDiningConfirmationParams {
+  reservation: PopulatedDiningReservation;
+}
+
+export async function sendDiningConfirmationEmail(
+  params: SendDiningConfirmationParams
+): Promise<EmailResult> {
+  const { reservation } = params;
+
+  try {
+    const clerk = await clerkClient();
+    const user = await clerk.users.getUser(reservation.customer as string);
+
+    const email = user.emailAddresses?.[0]?.emailAddress;
+    const firstName = user.firstName || 'Guest';
+
+    if (!email || !validateEmail(email)) {
+      return {
+        success: false,
+        error: 'Invalid or missing email address for customer',
+      };
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: 'LodgeFlow <onboarding@resend.dev>',
+      to: email,
+      subject: `Reservation Confirmed - ${reservation.dining.name}`,
+      react: DiningReservationConfirmationEmail({
+        date: reservation.date.toString(),
+        diningData: reservation.dining,
+        firstName,
+        numGuests: reservation.numGuests,
+        occasion: reservation.occasion,
+        reservationId: reservation._id.toString(),
+        tablePreference: reservation.tablePreference,
+        time: reservation.time,
+        totalPrice: reservation.totalPrice,
+      }),
+    });
+
+    if (error) {
+      console.error('Resend email error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error('Failed to send dining confirmation email:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to send email',
+    };
+  }
+}
+
+export interface SendExperienceConfirmationParams {
+  booking: PopulatedExperienceBooking;
+}
+
+export async function sendExperienceConfirmationEmail(
+  params: SendExperienceConfirmationParams
+): Promise<EmailResult> {
+  const { booking } = params;
+
+  try {
+    const clerk = await clerkClient();
+    const user = await clerk.users.getUser(booking.customer as string);
+
+    const email = user.emailAddresses?.[0]?.emailAddress;
+    const firstName = user.firstName || 'Guest';
+
+    if (!email || !validateEmail(email)) {
+      return {
+        success: false,
+        error: 'Invalid or missing email address for customer',
+      };
+    }
+
+    const { data, error } = await resend.emails.send({
+      from: 'LodgeFlow <onboarding@resend.dev>',
+      to: email,
+      subject: `Booking Confirmed - ${booking.experience.name}`,
+      react: ExperienceBookingConfirmationEmail({
+        bookingId: booking._id.toString(),
+        date: booking.date.toString(),
+        experienceData: booking.experience,
+        firstName,
+        numParticipants: booking.numParticipants,
+        timeSlot: booking.timeSlot,
+        totalPrice: booking.totalPrice,
+      }),
+    });
+
+    if (error) {
+      console.error('Resend email error:', error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true, messageId: data?.id };
+  } catch (error) {
+    console.error('Failed to send experience confirmation email:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send email',
