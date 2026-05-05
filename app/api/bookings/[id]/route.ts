@@ -111,9 +111,9 @@ export async function PATCH(
     if (booking.customer.toString() !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Unauthorized to modify this booking',
+        error: 'Booking not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     // Prevent modifications to checked-in/checked-out bookings
@@ -208,9 +208,9 @@ export async function DELETE(
     if (booking.customer.toString() !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Unauthorized to cancel this booking',
+        error: 'Booking not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     // Check if booking can be cancelled

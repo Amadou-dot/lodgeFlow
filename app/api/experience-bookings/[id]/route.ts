@@ -36,9 +36,9 @@ export async function GET(
     if (booking.customer !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Not authorized to view this booking',
+        error: 'Experience booking not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     const response: ApiResponse<typeof booking> = {
@@ -87,9 +87,9 @@ export async function PATCH(
     if (booking.customer !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Not authorized to update this booking',
+        error: 'Experience booking not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     if (booking.status === 'cancelled' || booking.status === 'completed') {
@@ -169,9 +169,9 @@ export async function DELETE(
     if (booking.customer !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Not authorized to cancel this booking',
+        error: 'Experience booking not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     if (booking.status === 'cancelled' || booking.status === 'completed') {
