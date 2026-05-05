@@ -36,9 +36,9 @@ export async function GET(
     if (reservation.customer !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Not authorized to view this reservation',
+        error: 'Dining reservation not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     const response: ApiResponse<typeof reservation> = {
@@ -87,9 +87,9 @@ export async function PATCH(
     if (reservation.customer !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Not authorized to update this reservation',
+        error: 'Dining reservation not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     if (
@@ -308,9 +308,9 @@ export async function DELETE(
     if (reservation.customer !== userId) {
       const response: ApiResponse<never> = {
         success: false,
-        error: 'Not authorized to cancel this reservation',
+        error: 'Dining reservation not found',
       };
-      return NextResponse.json(response, { status: 403 });
+      return NextResponse.json(response, { status: 404 });
     }
 
     if (
