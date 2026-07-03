@@ -4,6 +4,7 @@ import { connectDB, Cabin } from '@/models';
 import type { ApiResponse, Cabin as CabinType } from '@/types';
 import { cabinQuerySchema } from '@/lib/validations';
 import {
+  escapeRegex,
   validateRequest,
   validationErrorResponse,
 } from '@/lib/validations/utils';
@@ -38,12 +39,13 @@ export async function GET(request: NextRequest) {
       if (maxPrice) query.price.$lte = maxPrice;
     }
 
-    // Text search functionality
+    // Text search functionality — escape user input before building the regex
     if (search) {
+      const safeSearch = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { amenities: { $regex: search, $options: 'i' } },
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { description: { $regex: safeSearch, $options: 'i' } },
+        { amenities: { $regex: safeSearch, $options: 'i' } },
       ];
     }
 

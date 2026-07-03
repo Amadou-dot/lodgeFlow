@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { connectDB, Dining } from '@/models';
 import { diningQuerySchema } from '@/lib/validations';
 import {
+  escapeRegex,
   validateRequest,
   validationErrorResponse,
 } from '@/lib/validations/utils';
@@ -65,12 +66,13 @@ export async function GET(request: Request) {
       query.dietary = { $in: dietaryArray };
     }
 
-    // Text search functionality
+    // Text search functionality — escape user input before building the regex
     if (search) {
+      const safeSearch = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { dietary: { $regex: search, $options: 'i' } },
+        { name: { $regex: safeSearch, $options: 'i' } },
+        { description: { $regex: safeSearch, $options: 'i' } },
+        { dietary: { $regex: safeSearch, $options: 'i' } },
       ];
     }
 

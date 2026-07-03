@@ -42,11 +42,11 @@ export async function GET(
       );
     }
 
-    // Verify ownership
+    // Verify ownership — 404 (not 403) so we don't leak that the booking exists
     if (booking.customer !== userId) {
       return NextResponse.json(
-        { success: false, error: 'Not authorized to view this booking' },
-        { status: 403 }
+        { success: false, error: 'Booking not found' },
+        { status: 404 }
       );
     }
 

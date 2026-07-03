@@ -1,8 +1,13 @@
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { connectDB, ExperienceBooking } from '@/models';
+import { connectDB, Experience, ExperienceBooking } from '@/models';
 import type { ApiResponse } from '@/types';
+import { updateExperienceBookingDetailsSchema } from '@/lib/validations';
+import {
+  validateRequest,
+  validationErrorResponse,
+} from '@/lib/validations/utils';
 
 type Params = Promise<{ id: string }>;
 
@@ -100,26 +105,85 @@ export async function PATCH(
       return NextResponse.json(response, { status: 400 });
     }
 
-    const updates = await request.json();
-    const allowedFields = [
-      'date',
-      'timeSlot',
-      'numParticipants',
-      'specialRequests',
-      'observations',
-    ];
+    const body = await request.json();
 
-    const filteredUpdates: Record<string, unknown> = {};
-    for (const key of allowedFields) {
-      if (updates[key] !== undefined) {
-        filteredUpdates[key] = updates[key];
+    // Validate request body with Zod
+    const validation = validateRequest(
+      updateExperienceBookingDetailsSchema,
+      body
+    );
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
+    }
+
+    const filteredUpdates: Record<string, unknown> = { ...validation.data };
+
+    // Load the experience to re-validate capacity and pricing
+    const experience = await Experience.findById(booking.experience);
+    if (!experience) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: 'Associated experience not found',
+      };
+      return NextResponse.json(response, { status: 404 });
+    }
+
+    const effectiveDate = validation.data.date ?? booking.date;
+    const effectiveParticipants =
+      validation.data.numParticipants ?? booking.numParticipants;
+
+    // Re-check capacity when the date or participant count changes
+    if (
+      experience.maxParticipants &&
+      (validation.data.date || validation.data.numParticipants)
+    ) {
+      if (effectiveParticipants > experience.maxParticipants) {
+        const response: ApiResponse<never> = {
+          success: false,
+          error: `Maximum ${experience.maxParticipants} participants allowed`,
+        };
+        return NextResponse.json(response, { status: 400 });
       }
+
+      const dayStart = new Date(effectiveDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(effectiveDate);
+      dayEnd.setHours(23, 59, 59, 999);
+
+      const otherBookings = await ExperienceBooking.find({
+        _id: { $ne: id },
+        experience: booking.experience,
+        date: { $gte: dayStart, $lt: dayEnd },
+        status: { $nin: ['cancelled'] },
+      });
+
+      const totalParticipants = otherBookings.reduce(
+        (sum, b) => sum + b.numParticipants,
+        0
+      );
+
+      if (
+        totalParticipants + effectiveParticipants >
+        experience.maxParticipants
+      ) {
+        const remaining = experience.maxParticipants - totalParticipants;
+        const response: ApiResponse<never> = {
+          success: false,
+          error: `Not enough spots available. Only ${Math.max(0, remaining)} spot${remaining !== 1 ? 's' : ''} remaining.`,
+        };
+        return NextResponse.json(response, { status: 409 });
+      }
+    }
+
+    // Recalculate totalPrice when the participant count changes
+    if (validation.data.numParticipants) {
+      filteredUpdates.totalPrice = experience.price * effectiveParticipants;
     }
 
     const updated = await ExperienceBooking.findByIdAndUpdate(
       id,
       filteredUpdates,
-      { new: true }
+      { new: true, runValidators: true }
     ).populate('experience');
 
     const response: ApiResponse<typeof updated> = {

@@ -41,6 +41,34 @@ export const createExperienceBookingSchema = z
   );
 
 /**
+ * Update experience booking details schema (guest-facing PATCH for
+ * /api/experience-bookings/[id]) — the fields a guest may change on their
+ * own booking. Capacity and pricing are re-validated server-side.
+ */
+export const updateExperienceBookingDetailsSchema = z
+  .object({
+    date: z.coerce.date().optional(),
+    timeSlot: z.string().max(50).optional(),
+    numParticipants: z.number().int().min(1).max(500).optional(),
+    specialRequests: z.array(z.string()).optional(),
+    observations: z.string().max(1000).optional(),
+  })
+  .refine(
+    data => {
+      if (!data.date) return true;
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const bookingDate = new Date(data.date);
+      bookingDate.setHours(0, 0, 0, 0);
+      return bookingDate >= now;
+    },
+    {
+      message: 'Cannot set a date in the past',
+      path: ['date'],
+    }
+  );
+
+/**
  * Update experience booking request schema (guest-facing PATCH)
  */
 export const patchExperienceBookingSchema = z.object({
@@ -55,6 +83,9 @@ export const patchExperienceBookingSchema = z.object({
 
 export type CreateExperienceBookingInput = z.infer<
   typeof createExperienceBookingSchema
+>;
+export type UpdateExperienceBookingDetailsInput = z.infer<
+  typeof updateExperienceBookingDetailsSchema
 >;
 export type PatchExperienceBookingInput = z.infer<
   typeof patchExperienceBookingSchema

@@ -29,6 +29,15 @@ export function validateRequest<T extends z.ZodType>(
 }
 
 /**
+ * Escapes regex metacharacters in user-supplied text before it is used in a
+ * MongoDB $regex query. Without this, input like "(a+)+$" can trigger
+ * catastrophic backtracking (ReDoS) or match unintended documents.
+ */
+export function escapeRegex(input: string): string {
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Creates a standardized validation error response
  */
 export function validationErrorResponse(error: string) {
