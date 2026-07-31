@@ -652,7 +652,7 @@ export default function DiningPage() {
               </Button>
               <Button
                 as={Link}
-                href='mailto:dining@lodgeflow.com'
+                href='mailto:dining@lodgeflow.app'
                 size='lg'
                 startContent={<Mail className='w-4 h-4' />}
                 variant='bordered'

@@ -1,5 +1,15 @@
 # SEO Foundation & Cabin Indexability Implementation Plan
 
+> [!WARNING]
+> **Superseded — do not copy the env var or domain from this plan.** Code blocks
+> below are preserved as a record of what was planned in April 2026. Two things
+> have since changed:
+>
+> - `NEXT_PUBLIC_SITE_URL` no longer exists. `config/site.ts` reads
+>   `NEXT_PUBLIC_APP_URL`, which is the var actually set in Vercel.
+> - `lodgeflow.com` was a placeholder used before the real domain was bought.
+>   The site is `lodgeflow.app`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make LodgeFlow's core product pages (home + cabins list + cabin detail) fully crawlable, indexable, and rich-result-ready by converting them to server components with proper metadata, auth removal, and crawlability infrastructure.
