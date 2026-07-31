@@ -124,10 +124,7 @@ export default function DiningReservationForm({
           ? specialRequests.split('\n').filter(Boolean)
           : [],
         tablePreference: tablePreference as
-          | 'indoor'
-          | 'outdoor'
-          | 'bar'
-          | 'no-preference',
+          'indoor' | 'outdoor' | 'bar' | 'no-preference',
         occasion: occasion || undefined,
       });
 
