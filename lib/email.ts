@@ -1,10 +1,8 @@
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 import { clerkClient } from '@clerk/nextjs/server';
 
 import { PaymentConfirmationEmail } from '@/components/EmailTemplates';
 import type { PopulatedBooking, Cabin } from '@/types';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,7 +42,7 @@ export async function sendPaymentConfirmationEmail(
       };
     }
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'LodgeFlow <onboarding@resend.dev>',
       to: email,
       subject: `Payment Confirmation - ${cabin.name}`,
@@ -110,7 +108,7 @@ export async function sendCancellationConfirmationEmail(
         ? 'No refund is applicable based on our cancellation policy.'
         : `You will receive a ${refundType} refund of $${refundAmount.toFixed(2)}.`;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'LodgeFlow <onboarding@resend.dev>',
       to: email,
       subject: `Booking Cancellation Confirmed - ${cabin.name}`,
