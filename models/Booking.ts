@@ -8,11 +8,7 @@ export interface IBooking extends Document {
   numNights: number;
   numGuests: number;
   status:
-    | 'unconfirmed'
-    | 'confirmed'
-    | 'checked-in'
-    | 'checked-out'
-    | 'cancelled';
+    'unconfirmed' | 'confirmed' | 'checked-in' | 'checked-out' | 'cancelled';
   cabinPrice: number;
   extrasPrice: number;
   totalPrice: number;
@@ -40,12 +36,7 @@ export interface IBooking extends Document {
   cancelledAt?: Date;
   cancellationReason?: string;
   refundStatus?:
-    | 'none'
-    | 'pending'
-    | 'processing'
-    | 'partial'
-    | 'full'
-    | 'failed';
+    'none' | 'pending' | 'processing' | 'partial' | 'full' | 'failed';
   refundAmount?: number;
   refundedAt?: Date;
   paymentConfirmationSentAt?: Date;

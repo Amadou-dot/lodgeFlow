@@ -19,12 +19,7 @@ export interface IDining extends Document {
   ingredients?: string[];
   allergens?: string[];
   dietary?: (
-    | 'vegetarian'
-    | 'vegan'
-    | 'gluten-free'
-    | 'dairy-free'
-    | 'keto'
-    | 'paleo'
+    'vegetarian' | 'vegan' | 'gluten-free' | 'dairy-free' | 'keto' | 'paleo'
   )[];
   beverages?: {
     name: string;

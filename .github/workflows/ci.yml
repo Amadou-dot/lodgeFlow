@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.17.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm exec prettier --check .
+
+      # `pnpm lint` is `eslint --fix`, which rewrites files instead of failing on
+      # anything auto-fixable. CI runs eslint without --fix so those actually gate.
+      - name: Lint
+        run: pnpm exec eslint .
+
+      - name: Test
+        run: pnpm test
+
+      - name: Type check and build
+        # `next build` runs the TypeScript check, which is what caught the
+        # duplicate @internationalized/date copies that lint and tests missed.
+        #
+        # These are throwaway placeholders, not secrets. The build needs them
+        # only because several route modules construct SDK clients at module
+        # scope (e.g. `new Resend(process.env.RESEND_API_KEY)`), which throws
+        # while Next collects page data. No network calls happen during build.
+        env:
+          MONGODB_URI: mongodb://localhost:27017/lodgeflow
+          RESEND_API_KEY: re_ci_placeholder
+          STRIPE_SECRET_KEY: sk_test_ci_placeholder
+          STRIPE_PUBLISHABLE_KEY: pk_test_ci_placeholder
+          STRIPE_WEBHOOK_SECRET: whsec_ci_placeholder
+          CLERK_SECRET_KEY: sk_test_ci_placeholder
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ZXhhbXBsZS5jbGVyay5hY2NvdW50cy5kZXYk
+          NEXT_PUBLIC_APP_URL: http://localhost:3002
+        run: pnpm build

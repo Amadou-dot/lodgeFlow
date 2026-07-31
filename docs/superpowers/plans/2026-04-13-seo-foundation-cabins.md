@@ -836,9 +836,7 @@ export default function CabinDetailClient({ cabin }: CabinDetailClientProps) {
             <CabinTrustIndicators
               cancellationPolicy={
                 settings.cancellationPolicy as
-                  | 'flexible'
-                  | 'moderate'
-                  | 'strict'
+                  'flexible' | 'moderate' | 'strict'
               }
             />
           ) : settingsError ? (

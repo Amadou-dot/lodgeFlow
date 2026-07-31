@@ -225,12 +225,7 @@ export type {
 // Cancellation and refund types
 export type CancellationPolicy = 'flexible' | 'moderate' | 'strict';
 export type RefundStatus =
-  | 'none'
-  | 'pending'
-  | 'processing'
-  | 'partial'
-  | 'full'
-  | 'failed';
+  'none' | 'pending' | 'processing' | 'partial' | 'full' | 'failed';
 export type RefundType = 'full' | 'partial' | 'none';
 
 export interface RefundEstimate {
