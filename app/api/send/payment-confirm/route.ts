@@ -1,11 +1,9 @@
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 
 import { PaymentConfirmationEmail } from '@/components/EmailTemplates';
 import { Booking, connectDB } from '@/models';
 import type { PopulatedBooking } from '@/types';
 import { auth, currentUser } from '@clerk/nextjs/server';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -59,7 +57,7 @@ export async function POST(request: Request) {
           ? booking.depositAmount
           : booking.totalPrice;
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'LodgeFlow <onboarding@resend.dev>',
       react: PaymentConfirmationEmail({
         amountPaid: safeAmountPaid,

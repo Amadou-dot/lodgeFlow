@@ -1,9 +1,7 @@
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 
 import { WelcomeEmail } from '@/components/EmailTemplates';
 import { auth, currentUser } from '@clerk/nextjs/server';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,7 +23,7 @@ export async function POST() {
       return Response.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'LodgeFlow <onboarding@resend.dev>',
       react: WelcomeEmail({ firstName }),
       subject: 'Welcome to LodgeFlow',

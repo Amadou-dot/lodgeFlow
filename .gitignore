@@ -36,9 +36,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-pnpm-lock.yaml
+# Lockfiles from other package managers. pnpm-lock.yaml is deliberately NOT
+# ignored — it must be committed so installs are reproducible and transitive
+# versions can't drift silently.
 yarn.lock
 package-lock.json
 bun.lockb
 .vercel
 .worktrees/
+
+# Every .env file is ignored (.env.local holds real secrets) except the
+# committed template documenting which vars the app needs.
+.env*
+!.env.example

@@ -6,20 +6,9 @@ interface CallToActionButton {
   label: string;
   href: string;
   variant?:
-    | 'solid'
-    | 'bordered'
-    | 'light'
-    | 'flat'
-    | 'faded'
-    | 'shadow'
-    | 'ghost';
+    'solid' | 'bordered' | 'light' | 'flat' | 'faded' | 'shadow' | 'ghost';
   color?:
-    | 'default'
-    | 'primary'
-    | 'secondary'
-    | 'success'
-    | 'warning'
-    | 'danger';
+    'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   startContent?: ReactNode;
   endContent?: ReactNode;

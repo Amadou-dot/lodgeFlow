@@ -20,7 +20,7 @@ import { useSettings } from '@/hooks/useSettings';
 
 // Default fallback values when settings are not available
 const FALLBACK_PHONE = ['+1 (800) LODGEFLOW', '+1 (800) 563-4335'];
-const FALLBACK_EMAIL = ['hello@lodgeflow.com', 'reservations@lodgeflow.com'];
+const FALLBACK_EMAIL = ['hello@lodgeflow.app', 'reservations@lodgeflow.app'];
 const FALLBACK_LOCATION = [
   'LodgeFlow Resort',
   '1000 Wilderness Drive',

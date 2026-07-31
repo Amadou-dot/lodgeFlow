@@ -1,10 +1,8 @@
-import { Resend } from 'resend';
+import { getResend } from '@/lib/resend';
 
 import { DiningReservationConfirmationEmail } from '@/components/EmailTemplates';
 import { connectDB, DiningReservation } from '@/models';
 import { auth, currentUser } from '@clerk/nextjs/server';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,7 +48,7 @@ export async function POST(request: Request) {
       return Response.json({ error: 'Invalid email address' }, { status: 400 });
     }
 
-    const { data, error } = await resend.emails.send({
+    const { data, error } = await getResend().emails.send({
       from: 'LodgeFlow <onboarding@resend.dev>',
       react: DiningReservationConfirmationEmail({
         date: reservation.date.toISOString(),
