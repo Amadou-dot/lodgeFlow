@@ -33,7 +33,7 @@ export const siteConfig = {
   ],
   links: {
     reservations: 'tel:+1-800-LODGEFLOW',
-    email: 'mailto:hello@lodgeflow.com',
+    email: 'mailto:hello@lodgeflow.app',
     instagram: 'https://instagram.com/#',
     facebook: 'https://facebook.com/#',
   },

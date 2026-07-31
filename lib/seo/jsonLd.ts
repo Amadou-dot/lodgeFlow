@@ -11,7 +11,7 @@ export function siteToLodgingBusiness(): Record<string, unknown> {
     description: siteConfig.description,
     url: base(),
     telephone: '+1-800-LODGEFLOW',
-    email: 'hello@lodgeflow.com',
+    email: 'hello@lodgeflow.app',
     image: `${base()}/logo.svg`,
     sameAs: [siteConfig.links.instagram, siteConfig.links.facebook].filter(
       u => u && !u.endsWith('#')

@@ -405,7 +405,7 @@ export function BookingConfirmationEmail({
         <p>We can't wait to welcome you to LodgeFlow!</p>
         <p style={{ fontSize: '14px', margin: '10px 0 0 0', opacity: 0.8 }}>
           If you have any questions about your booking, please contact us at
-          support@lodgeflow.com
+          support@lodgeflow.app
         </p>
       </div>
     </div>
@@ -504,7 +504,7 @@ export function PaymentConfirmationEmail({
         <p>Thank you for choosing LodgeFlow!</p>
         <p style={{ fontSize: '14px', margin: '10px 0 0 0', opacity: 0.8 }}>
           If you have any questions about your payment, please contact us at
-          support@lodgeflow.com
+          support@lodgeflow.app
         </p>
       </div>
     </div>
@@ -622,7 +622,7 @@ export function ExperienceBookingConfirmationEmail({
       <div style={emailStyles.footer}>
         <p>We can't wait to see you at the experience!</p>
         <p style={{ fontSize: '14px', margin: '10px 0 0 0', opacity: 0.8 }}>
-          If you have any questions, please contact us at support@lodgeflow.com
+          If you have any questions, please contact us at support@lodgeflow.app
         </p>
       </div>
     </div>
@@ -747,7 +747,7 @@ export function DiningReservationConfirmationEmail({
       <div style={emailStyles.footer}>
         <p>We look forward to serving you at LodgeFlow!</p>
         <p style={{ fontSize: '14px', margin: '10px 0 0 0', opacity: 0.8 }}>
-          If you have any questions, please contact us at support@lodgeflow.com
+          If you have any questions, please contact us at support@lodgeflow.app
         </p>
       </div>
     </div>
