@@ -1,6 +1,20 @@
-import { Booking, ProcessedStripeEvent, connectDB } from '@/models';
-import { sendPaymentConfirmationEmail } from '@/lib/email';
-import type { PopulatedBooking } from '@/types';
+import {
+  Booking,
+  DiningReservation,
+  ExperienceBooking,
+  ProcessedStripeEvent,
+  connectDB,
+} from '@/models';
+import {
+  sendPaymentConfirmationEmail,
+  sendDiningConfirmationEmail,
+  sendExperienceConfirmationEmail,
+} from '@/lib/email';
+import type {
+  PopulatedBooking,
+  PopulatedDiningReservation,
+  PopulatedExperienceBooking,
+} from '@/types';
 import { getStripe } from '@/lib/stripe';
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
@@ -82,6 +96,8 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         const bookingId = session.metadata?.bookingId;
         const isDeposit = session.metadata?.isDeposit === 'true';
+        const diningReservationId = session.metadata?.diningReservationId;
+        const experienceBookingId = session.metadata?.experienceBookingId;
 
         if (bookingId) {
           const booking = (await Booking.findById(bookingId).populate(
@@ -141,6 +157,86 @@ export async function POST(request: NextRequest) {
               );
             }
           }
+        } else if (diningReservationId) {
+          const reservation = (await DiningReservation.findById(
+            diningReservationId
+          ).populate('dining')) as unknown as PopulatedDiningReservation | null;
+
+          if (!reservation) {
+            console.error(
+              `Dining reservation not found: ${diningReservationId}`
+            );
+            break;
+          }
+
+          if (reservation.isPaid) {
+            break;
+          }
+
+          await DiningReservation.findByIdAndUpdate(diningReservationId, {
+            stripePaymentIntentId: session.payment_intent as string,
+            stripeSessionId: session.id,
+            paidAt: new Date(),
+            status: 'confirmed',
+            isPaid: true,
+          });
+
+          if (!reservation.paymentConfirmationSentAt) {
+            const emailResult = await sendDiningConfirmationEmail({
+              reservation,
+            });
+            if (emailResult.success) {
+              await DiningReservation.findByIdAndUpdate(diningReservationId, {
+                paymentConfirmationSentAt: new Date(),
+              });
+            } else {
+              console.error(
+                'Failed to send dining confirmation email:',
+                emailResult.error
+              );
+            }
+          }
+        } else if (experienceBookingId) {
+          const booking = (await ExperienceBooking.findById(
+            experienceBookingId
+          ).populate(
+            'experience'
+          )) as unknown as PopulatedExperienceBooking | null;
+
+          if (!booking) {
+            console.error(
+              `Experience booking not found: ${experienceBookingId}`
+            );
+            break;
+          }
+
+          if (booking.isPaid) {
+            break;
+          }
+
+          await ExperienceBooking.findByIdAndUpdate(experienceBookingId, {
+            stripePaymentIntentId: session.payment_intent as string,
+            stripeSessionId: session.id,
+            paidAt: new Date(),
+            status: 'confirmed',
+            isPaid: true,
+          });
+
+          if (!booking.paymentConfirmationSentAt) {
+            const emailResult = await sendExperienceConfirmationEmail({
+              booking,
+            });
+            if (emailResult.success) {
+              await ExperienceBooking.findByIdAndUpdate(experienceBookingId, {
+                paymentConfirmationSentAt: new Date(),
+              });
+            } else {
+              console.error(
+                'Failed to send experience confirmation email:',
+                emailResult.error
+              );
+            }
+          }
         }
         break;
       }
@@ -148,6 +244,8 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const bookingId = paymentIntent.metadata?.bookingId;
+        const diningReservationId = paymentIntent.metadata?.diningReservationId;
+        const experienceBookingId = paymentIntent.metadata?.experienceBookingId;
 
         if (bookingId) {
           const booking = await Booking.findById(bookingId);
@@ -155,10 +253,35 @@ export async function POST(request: NextRequest) {
             console.error(`Booking not found: ${bookingId}`);
             break;
           }
-
-          // Only update if not already set
           if (!booking.stripePaymentIntentId) {
             await Booking.findByIdAndUpdate(bookingId, {
+              stripePaymentIntentId: paymentIntent.id,
+            });
+          }
+        } else if (diningReservationId) {
+          const reservation =
+            await DiningReservation.findById(diningReservationId);
+          if (!reservation) {
+            console.error(
+              `Dining reservation not found: ${diningReservationId}`
+            );
+            break;
+          }
+          if (!reservation.stripePaymentIntentId) {
+            await DiningReservation.findByIdAndUpdate(diningReservationId, {
+              stripePaymentIntentId: paymentIntent.id,
+            });
+          }
+        } else if (experienceBookingId) {
+          const booking = await ExperienceBooking.findById(experienceBookingId);
+          if (!booking) {
+            console.error(
+              `Experience booking not found: ${experienceBookingId}`
+            );
+            break;
+          }
+          if (!booking.stripePaymentIntentId) {
+            await ExperienceBooking.findByIdAndUpdate(experienceBookingId, {
               stripePaymentIntentId: paymentIntent.id,
             });
           }

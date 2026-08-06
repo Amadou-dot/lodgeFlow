@@ -63,3 +63,65 @@ export const usePaymentStatus = (bookingId: string) => {
     gcTime: 10 * 60 * 1000,
   });
 };
+
+/**
+ * Hook to create a Stripe Checkout session for a dining reservation
+ */
+export const useCreateDiningCheckoutSession = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (reservationId: string): Promise<{ url: string }> => {
+      const response = await fetch('/api/payments/create-dining-checkout', {
+        body: JSON.stringify({ reservationId }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create checkout session');
+      }
+
+      const data: ApiResponse<{ url: string }> = await response.json();
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dining-reservation'] });
+      queryClient.invalidateQueries({
+        queryKey: ['dining-reservations-history'],
+      });
+    },
+  });
+};
+
+/**
+ * Hook to create a Stripe Checkout session for an experience booking
+ */
+export const useCreateExperienceCheckoutSession = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (bookingId: string): Promise<{ url: string }> => {
+      const response = await fetch('/api/payments/create-experience-checkout', {
+        body: JSON.stringify({ bookingId }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create checkout session');
+      }
+
+      const data: ApiResponse<{ url: string }> = await response.json();
+      return data.data!;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['experience-booking'] });
+      queryClient.invalidateQueries({
+        queryKey: ['experience-bookings-history'],
+      });
+    },
+  });
+};

@@ -10,6 +10,9 @@ export interface IDiningReservation extends Document {
   totalPrice: number;
   isPaid: boolean;
   stripePaymentIntentId?: string;
+  stripeSessionId?: string;
+  paidAt?: Date;
+  paymentConfirmationSentAt?: Date;
   dietaryRequirements?: string[];
   specialRequests?: string[];
   tablePreference?: 'indoor' | 'outdoor' | 'bar' | 'no-preference';
@@ -59,6 +62,15 @@ const DiningReservationSchema: Schema = new Schema(
     },
     stripePaymentIntentId: {
       type: String,
+    },
+    stripeSessionId: {
+      type: String,
+    },
+    paidAt: {
+      type: Date,
+    },
+    paymentConfirmationSentAt: {
+      type: Date,
     },
     dietaryRequirements: {
       type: [String],

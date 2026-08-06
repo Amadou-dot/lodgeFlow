@@ -414,8 +414,8 @@ export default function BookingConfirmationPage({
                 </p>
                 <PaymentButton
                   amount={amountToPay}
-                  bookingId={booking._id}
                   isDeposit={isDepositDue}
+                  resourceId={booking._id}
                   size='lg'
                 />
               </CardBody>

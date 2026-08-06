@@ -19,6 +19,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { title, subtitle } from '@/components/primitives';
+import PaymentButton from '@/components/PaymentButton';
 
 type Params = Promise<{ id: string }>;
 
@@ -91,6 +92,22 @@ export default function DiningConfirmationPage({ params }: { params: Params }) {
     fetchReservation();
   }, [reservationId, isLoaded]);
 
+  useEffect(() => {
+    const onFocus = () => {
+      if (!reservationId) return;
+      fetch(`/api/dining-reservations/${reservationId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.success && data?.data) setReservation(data.data);
+        })
+        .catch(() => {
+          // ignore — user can refresh manually
+        });
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [reservationId]);
+
   if (isLoading || !isLoaded) {
     return (
       <div className='flex flex-col justify-center items-center min-h-screen gap-4'>
@@ -162,15 +179,25 @@ export default function DiningConfirmationPage({ params }: { params: Params }) {
     <div className='container mx-auto px-4 py-8 max-w-4xl'>
       {/* Success Header */}
       <div className='flex flex-col items-center gap-4 mb-8 text-center'>
-        <CheckCircle className='w-20 h-20 text-success' />
-        <h1 className={title({ size: 'lg' })}>Reservation Submitted!</h1>
+        <CheckCircle
+          className={`w-20 h-20 ${reservation.isPaid ? 'text-success' : 'text-warning'}`}
+        />
+        <h1 className={title({ size: 'lg' })}>
+          {reservation.isPaid
+            ? 'Reservation Confirmed!'
+            : 'Reservation Submitted'}
+        </h1>
         <p className={subtitle()}>
-          Your dining reservation has been received. We'll confirm it shortly.
+          {reservation.isPaid
+            ? "We've sent a confirmation email with your reservation details."
+            : 'Complete payment below to confirm your reservation.'}
         </p>
-        <Chip color='warning' size='lg' variant='flat'>
-          Status:{' '}
-          {reservation.status.charAt(0).toUpperCase() +
-            reservation.status.slice(1)}
+        <Chip
+          color={reservation.isPaid ? 'success' : 'warning'}
+          size='lg'
+          variant='flat'
+        >
+          Status: {reservation.isPaid ? 'Paid' : 'Awaiting payment'}
         </Chip>
       </div>
 
@@ -312,6 +339,14 @@ export default function DiningConfirmationPage({ params }: { params: Params }) {
 
       {/* Action Buttons */}
       <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+        {!reservation.isPaid && (
+          <PaymentButton
+            amount={reservation.totalPrice}
+            resourceId={reservation._id}
+            resourceType='dining'
+            size='lg'
+          />
+        )}
         <Link href='/bookings'>
           <Button
             color='primary'

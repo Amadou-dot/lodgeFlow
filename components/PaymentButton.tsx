@@ -4,28 +4,45 @@ import { Button } from '@heroui/button';
 import { addToast } from '@heroui/toast';
 import { CreditCard } from 'lucide-react';
 
-import { useCreateCheckoutSession } from '@/hooks/usePayment';
+import {
+  useCreateCheckoutSession,
+  useCreateDiningCheckoutSession,
+  useCreateExperienceCheckoutSession,
+} from '@/hooks/usePayment';
+
+type ResourceType = 'cabin' | 'dining' | 'experience';
 
 interface PaymentButtonProps {
-  bookingId: string;
+  resourceId: string;
   amount: number;
+  resourceType?: ResourceType;
   isDeposit?: boolean;
   size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
 export default function PaymentButton({
-  bookingId,
+  resourceId,
   amount,
+  resourceType = 'cabin',
   isDeposit = false,
   size = 'md',
   className,
 }: PaymentButtonProps) {
-  const createCheckout = useCreateCheckoutSession();
+  const cabinCheckout = useCreateCheckoutSession();
+  const diningCheckout = useCreateDiningCheckoutSession();
+  const experienceCheckout = useCreateExperienceCheckoutSession();
+
+  const mutation =
+    resourceType === 'dining'
+      ? diningCheckout
+      : resourceType === 'experience'
+        ? experienceCheckout
+        : cabinCheckout;
 
   const handlePayment = async () => {
     try {
-      const { url } = await createCheckout.mutateAsync(bookingId);
+      const { url } = await mutation.mutateAsync(resourceId);
       window.location.href = url;
     } catch (error) {
       addToast({
@@ -43,11 +60,9 @@ export default function PaymentButton({
     <Button
       className={className}
       color='success'
-      isLoading={createCheckout.isPending}
+      isLoading={mutation.isPending}
       size={size}
-      startContent={
-        !createCheckout.isPending && <CreditCard className='w-4 h-4' />
-      }
+      startContent={!mutation.isPending && <CreditCard className='w-4 h-4' />}
       onPress={handlePayment}
     >
       {isDeposit ? `Pay Deposit ($${amount})` : `Pay Now ($${amount})`}

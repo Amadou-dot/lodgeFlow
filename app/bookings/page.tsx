@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Button } from '@heroui/button';
 import { Card, CardBody, CardHeader } from '@heroui/card';
 import { Chip } from '@heroui/chip';
-import { DatePicker } from '@heroui/date-picker';
 import { Input } from '@heroui/input';
 import {
   Modal,
@@ -37,7 +36,7 @@ import {
   useCancelExperienceBooking,
   useExperienceBookingHistory,
 } from '@/hooks/useExperienceBooking';
-import type { Booking, ExperienceBooking } from '@/types';
+import type { Booking } from '@/types';
 
 const statusFilters = [
   { key: 'all', label: 'All Bookings' },
@@ -421,8 +420,8 @@ export default function BookingsPage() {
                               <div className='pt-2'>
                                 <PaymentButton
                                   amount={amountToPay}
-                                  bookingId={booking._id.toString()}
                                   isDeposit={isDepositDue}
+                                  resourceId={booking._id.toString()}
                                   size='sm'
                                 />
                               </div>

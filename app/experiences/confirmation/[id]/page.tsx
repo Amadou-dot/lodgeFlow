@@ -19,6 +19,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { title, subtitle } from '@/components/primitives';
+import PaymentButton from '@/components/PaymentButton';
 
 type Params = Promise<{ id: string }>;
 
@@ -88,6 +89,22 @@ export default function ExperienceConfirmationPage({
     fetchBooking();
   }, [bookingId, isLoaded]);
 
+  useEffect(() => {
+    const onFocus = () => {
+      if (!bookingId) return;
+      fetch(`/api/experience-bookings/${bookingId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data?.success && data?.data) setBooking(data.data);
+        })
+        .catch(() => {
+          // ignore — user can refresh manually
+        });
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [bookingId]);
+
   if (isLoading || !isLoaded) {
     return (
       <div className='flex flex-col justify-center items-center min-h-screen gap-4'>
@@ -152,14 +169,23 @@ export default function ExperienceConfirmationPage({
     <div className='container mx-auto px-4 py-8 max-w-4xl'>
       {/* Success Header */}
       <div className='flex flex-col items-center gap-4 mb-8 text-center'>
-        <CheckCircle className='w-20 h-20 text-success' />
-        <h1 className={title({ size: 'lg' })}>Booking Submitted!</h1>
+        <CheckCircle
+          className={`w-20 h-20 ${booking.isPaid ? 'text-success' : 'text-warning'}`}
+        />
+        <h1 className={title({ size: 'lg' })}>
+          {booking.isPaid ? 'Booking Confirmed!' : 'Booking Submitted'}
+        </h1>
         <p className={subtitle()}>
-          Your experience booking has been received. We'll confirm it shortly.
+          {booking.isPaid
+            ? "We've sent a confirmation email with your booking details."
+            : 'Complete payment below to confirm your booking.'}
         </p>
-        <Chip color='warning' size='lg' variant='flat'>
-          Status:{' '}
-          {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+        <Chip
+          color={booking.isPaid ? 'success' : 'warning'}
+          size='lg'
+          variant='flat'
+        >
+          Status: {booking.isPaid ? 'Paid' : 'Awaiting payment'}
         </Chip>
       </div>
 
@@ -279,6 +305,14 @@ export default function ExperienceConfirmationPage({
 
       {/* Action Buttons */}
       <div className='flex flex-col sm:flex-row gap-4 justify-center'>
+        {!booking.isPaid && (
+          <PaymentButton
+            amount={booking.totalPrice}
+            resourceId={booking._id}
+            resourceType='experience'
+            size='lg'
+          />
+        )}
         <Link href='/bookings'>
           <Button
             color='primary'

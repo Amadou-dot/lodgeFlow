@@ -10,6 +10,9 @@ export interface IExperienceBooking extends Document {
   totalPrice: number;
   isPaid: boolean;
   stripePaymentIntentId?: string;
+  stripeSessionId?: string;
+  paidAt?: Date;
+  paymentConfirmationSentAt?: Date;
   specialRequests?: string[];
   observations?: string;
   createdAt: Date;
@@ -55,6 +58,15 @@ const ExperienceBookingSchema: Schema = new Schema(
     },
     stripePaymentIntentId: {
       type: String,
+    },
+    stripeSessionId: {
+      type: String,
+    },
+    paidAt: {
+      type: Date,
+    },
+    paymentConfirmationSentAt: {
+      type: Date,
     },
     specialRequests: {
       type: [String],
