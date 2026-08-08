@@ -202,7 +202,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook processing error:', error);
-    // Don't mark as processed on error so Stripe can retry
+    // Release the idempotency claim so Stripe's retry of this event is
+    // actually processed — otherwise the retry hits the claim and is skipped,
+    // permanently losing the event (e.g. a booking never marked as paid).
+    try {
+      await ProcessedStripeEvent.deleteOne({ eventId: event.id });
+    } catch (releaseError) {
+      console.error(
+        'Failed to release webhook idempotency claim:',
+        releaseError
+      );
+    }
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }

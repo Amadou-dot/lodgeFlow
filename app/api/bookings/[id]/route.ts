@@ -226,6 +226,32 @@ export async function DELETE(
       return NextResponse.json(response, { status: 400 });
     }
 
+    // Atomically claim the cancellation BEFORE issuing any refund. Two
+    // concurrent DELETE requests could both pass the status check above and
+    // each trigger a Stripe refund; this conditional update guarantees only
+    // one request proceeds to the refund step.
+    const claimedBooking = await Booking.findOneAndUpdate(
+      {
+        _id: id,
+        customer: userId,
+        status: { $nin: ['checked-in', 'checked-out', 'cancelled'] },
+      },
+      {
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        cancellationReason,
+      },
+      { new: true }
+    );
+
+    if (!claimedBooking) {
+      const response: ApiResponse<never> = {
+        success: false,
+        error: 'Booking has already been cancelled or cannot be cancelled',
+      };
+      return NextResponse.json(response, { status: 409 });
+    }
+
     // Get settings for cancellation policy
     const settings = await Settings.getSettings();
 
@@ -271,11 +297,8 @@ export async function DELETE(
       }
     }
 
-    // Update booking with cancellation details
+    // Record refund outcome (status/cancelledAt were set by the atomic claim)
     const updateData = {
-      status: 'cancelled',
-      cancelledAt: new Date(),
-      cancellationReason,
       refundStatus,
       refundAmount: refundEstimate.refundAmount,
     };

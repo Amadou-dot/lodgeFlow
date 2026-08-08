@@ -71,11 +71,13 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      return Response.json({ error }, { status: 500 });
+      console.error('Email send failed:', error);
+      return Response.json({ error: 'Failed to send email' }, { status: 500 });
     }
 
     return Response.json(data);
   } catch (error) {
-    return Response.json({ error }, { status: 500 });
+    console.error('Email send failed:', error);
+    return Response.json({ error: 'Failed to send email' }, { status: 500 });
   }
 }

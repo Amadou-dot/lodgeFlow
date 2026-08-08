@@ -1,61 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+
 import { connectDB, Booking, Cabin } from '@/models';
-import type { ApiResponse, AvailableCabin, AvailabilityQuery } from '@/types';
+import type { ApiResponse, AvailableCabin } from '@/types';
+import {
+  validateRequest,
+  validationErrorResponse,
+} from '@/lib/validations/utils';
+
+const availabilityQuerySchema = z
+  .object({
+    checkInDate: z.coerce.date(),
+    checkOutDate: z.coerce.date(),
+    guests: z.coerce.number().int().min(1).max(50),
+  })
+  .refine(data => data.checkOutDate > data.checkInDate, {
+    message: 'Check-out date must be after check-in date',
+    path: ['checkOutDate'],
+  });
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const body: AvailabilityQuery = await request.json();
-    const { checkInDate, checkOutDate, guests } = body;
+    const body = await request.json();
 
-    if (!checkInDate || !checkOutDate || !guests) {
-      const response: ApiResponse<never> = {
-        success: false,
-        error: 'Missing required fields: checkInDate, checkOutDate, guests',
-      };
-      return NextResponse.json(response, { status: 400 });
+    const validation = validateRequest(availabilityQuerySchema, body);
+    if (!validation.success) {
+      return validationErrorResponse(validation.error);
     }
 
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
-
-    if (checkIn >= checkOut) {
-      const response: ApiResponse<never> = {
-        success: false,
-        error: 'Check-out date must be after check-in date',
-      };
-      return NextResponse.json(response, { status: 400 });
-    }
+    const {
+      checkInDate: checkIn,
+      checkOutDate: checkOut,
+      guests,
+    } = validation.data;
 
     // Find cabins that can accommodate the guests
-    const cabins = await Cabin.find({ capacity: { $gte: guests } }).sort({
-      price: 1,
-    });
+    const cabins = await Cabin.find({
+      status: 'active',
+      capacity: { $gte: guests },
+    }).sort({ price: 1 });
 
-    // Check availability for each cabin
-    const availabilityPromises = cabins.map(async cabin => {
-      const conflictingBookings = await Booking.find({
-        cabin: cabin._id,
-        status: { $nin: ['cancelled'] },
-        $or: [
-          {
-            checkInDate: { $lt: checkOut },
-            checkOutDate: { $gt: checkIn },
-          },
-        ],
-      });
+    // Fetch all overlapping bookings for these cabins in a single query
+    // instead of one query per cabin.
+    const overlappingBookings = await Booking.find({
+      cabin: { $in: cabins.map(cabin => cabin._id) },
+      status: { $nin: ['cancelled'] },
+      checkInDate: { $lt: checkOut },
+      checkOutDate: { $gt: checkIn },
+    })
+      .select('cabin')
+      .lean();
 
-      const availableCabin: AvailableCabin = {
-        ...cabin.toObject(),
-        isAvailable: conflictingBookings.length === 0,
-        conflictingBookings: conflictingBookings.map(b => b._id.toString()),
-      };
+    const bookedCabinIds = new Set(
+      overlappingBookings.map(booking => String(booking.cabin))
+    );
 
-      return availableCabin;
-    });
-
-    const availableCabins = await Promise.all(availabilityPromises);
+    // Note: booking IDs of conflicting reservations are intentionally not
+    // returned — this is a public endpoint and those belong to other users.
+    const availableCabins: AvailableCabin[] = cabins.map(cabin => ({
+      ...cabin.toObject(),
+      isAvailable: !bookedCabinIds.has(cabin._id.toString()),
+    }));
 
     const response: ApiResponse<AvailableCabin[]> = {
       success: true,

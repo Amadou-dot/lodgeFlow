@@ -258,6 +258,9 @@ BookingSchema.index({ customer: 1, createdAt: -1 });
 BookingSchema.index({ status: 1, checkInDate: 1 });
 BookingSchema.index({ checkInDate: 1, checkOutDate: 1 });
 BookingSchema.index({ isPaid: 1 });
+// Stripe webhook (charge.refunded) looks bookings up by payment intent —
+// without this index that lookup is a full collection scan.
+BookingSchema.index({ stripePaymentIntentId: 1 }, { sparse: true });
 BookingSchema.index({ checkInDate: 1 });
 BookingSchema.index({ checkOutDate: 1 });
 

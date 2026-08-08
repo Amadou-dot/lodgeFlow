@@ -1,12 +1,21 @@
 import { Booking, Cabin, connectDB, Settings } from '@/models';
 import type { ApiResponse, PopulatedBooking } from '@/types';
 import { auth } from '@clerk/nextjs/server';
+import mongoose from 'mongoose';
 import { NextRequest, NextResponse } from 'next/server';
 import { createBookingSchema } from '@/lib/validations';
 import {
   validateRequest,
   validationErrorResponse,
 } from '@/lib/validations/utils';
+
+class BookingConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BookingConflictError';
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
@@ -153,29 +162,76 @@ export async function POST(request: NextRequest) {
       ? Math.round(totalPrice * (settings.depositPercentage / 100))
       : 0;
 
-    // Create booking
-    const booking = await Booking.create({
-      cabin: cabinId,
-      customer: userId,
-      checkInDate: checkIn,
-      checkOutDate: checkOut,
-      numNights,
-      numGuests,
-      status: 'unconfirmed',
-      cabinPrice: effectivePrice,
-      extrasPrice,
-      totalPrice,
-      isPaid: false,
-      paymentMethod: 'online',
-      extras: bookingExtras,
-      specialRequests,
-      observations,
-      depositPaid: false,
-      depositAmount,
-    });
+    // Create the booking and re-verify no overlap inside a transaction.
+    // The findOverlapping pre-check above is a fast path, but two concurrent
+    // requests can both pass it (check-then-insert race) and double-book the
+    // cabin. Same pattern as the dining reservation create route.
+    const session = await mongoose.startSession();
+    let bookingId: string;
+
+    try {
+      await session.withTransaction(async () => {
+        const [created] = await Booking.create(
+          [
+            {
+              cabin: cabinId,
+              customer: userId,
+              checkInDate: checkIn,
+              checkOutDate: checkOut,
+              numNights,
+              numGuests,
+              status: 'unconfirmed',
+              cabinPrice: effectivePrice,
+              extrasPrice,
+              totalPrice,
+              isPaid: false,
+              paymentMethod: 'online',
+              extras: bookingExtras,
+              specialRequests,
+              observations,
+              depositPaid: false,
+              depositAmount,
+            },
+          ],
+          { session }
+        );
+
+        bookingId = created._id.toString();
+
+        const conflicts = await Booking.find(
+          {
+            _id: { $ne: created._id },
+            cabin: cabinId,
+            status: { $ne: 'cancelled' },
+            checkInDate: { $lt: checkOut },
+            checkOutDate: { $gt: checkIn },
+          },
+          null,
+          { session }
+        );
+
+        if (conflicts.length > 0) {
+          throw new BookingConflictError(
+            'Cabin is not available for the selected dates'
+          );
+        }
+      });
+    } catch (err) {
+      session.endSession();
+      if (err instanceof BookingConflictError) {
+        const response: ApiResponse<never> = {
+          success: false,
+          error: err.message,
+        };
+        return NextResponse.json(response, { status: 409 });
+      }
+      throw err;
+    }
+
+    session.endSession();
 
     // Populate the booking for response
-    const populatedBooking = (await Booking.findById(booking._id).populate(
+    const populatedBooking = (await Booking.findById(bookingId!).populate(
       'cabin'
     )) as unknown as PopulatedBooking;
     const response: ApiResponse<any> = {
